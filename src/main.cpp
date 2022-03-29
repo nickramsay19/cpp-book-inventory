@@ -29,9 +29,20 @@ int main(int argc, char** argv) {
         Book book1("Animal Farm", "George Orwell", {"Fiction", "Satire", "Politics"});
         Book book2("Dracula", "Bram Stoker", {"Fiction", "Gothic", "Horror", "Fantasy", "Thriller"});
         Book book3("The Wealth of Nations", "Adam Smith", {"Non-Fiction", "Economics", "Philosophy", "Treatise", "Resource-allocation Theory"});
+        Book book4("The Great Gatsby", "F. Scott Fitzgerald", {"Fiction", "Literature"});
+        Book book5("1984", "George Orwell", {"Fiction", "Satire", "Politics"});
+        Book book6("War and Peace", "Leo Tolstoy", {"Fiction", "War", "Commentary", "Realist-Fiction"});
+        Book book7("Dummy Book", "Nicholas Ramsay", {"Genre1", "Genre2", "Genre3", "Genre4", "Genre5", "Genre6", "Genre7", "Genre8"});
         invFile.AddBook(book1);
         invFile.AddBook(book2);
         invFile.AddBook(book3);
+        invFile.AddBook(book4);
+        invFile.AddBook(book5);
+        invFile.AddBook(book6);
+        for (int i = 0; i < 100; i++) {
+            invFile.AddBook(book7);
+        }
+        
         invFile.Write();
     }
     
