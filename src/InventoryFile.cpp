@@ -28,6 +28,33 @@ std::string charPtrLen2Str(char *base, size_t *head, size_t len) {
     return str;
 }
 
+std::string charPtrLen2StrCompressed(char *base, size_t *head) {
+    std::string str("");
+
+    printf("CURRENT BYTE POS: %zu\n", *head);
+
+    // get the start pos relative to the base
+    char *ptr = &base[*head];
+
+    // first byte should be a byte indicating the length of the string
+    size_t len = (size_t) *ptr; // reads one byte, casts to size_t ulong
+    printf("STRING LENGTH: %zu\n", len);
+
+    // we read a byte, so move forware one bye
+    ptr++;
+
+    // now loop normally, appending each char to the string
+    for (char *p = ptr; p < (ptr + len); p++) {
+        str += *p;
+    }
+
+    // now adjust the position of head
+    *head += len + 1; // move by the length of the string plus the length of the one byte str length we read
+
+    // return the string
+    return str;
+}
+
 void writeStr(std::fstream *outfile, std::string str, size_t len) {
     // check that str length is less than "len"
     if (str.length() > len) {
@@ -44,6 +71,19 @@ void writeStr(std::fstream *outfile, std::string str, size_t len) {
     for (int i = str.length(); i < len; i++) {
         *outfile << '\0';
     }
+}
+
+void writeStrCompressed(std::fstream *outfile, std::string str) {
+    // check that str length is less than "len"
+    if (str.length() > MAX_BOOK_TEXT) {
+        char *err_msg;
+        sprintf(err_msg, "Error in \'writeStr\': Parameter \'str\' of value \"%s\" exceeds the length restriction of %d.", str.c_str(), MAX_BOOK_TEXT);
+        throw std::invalid_argument(err_msg);
+    }
+
+    // write the string provided to the output file
+    *outfile << (char) str.length(); // write the length but only as one byte to save space, size shouldn't exceed one byte anyway
+    *outfile << str; // write the string contents
 }
 
 InventoryFile::InventoryFile(std::string inventoryFilename) {
@@ -63,11 +103,6 @@ void InventoryFile::Read() {
         char *data = reinterpret_cast<char *>(new int[file_size]); // create the buffer of size file_size
         inBooksFile.read(data, file_size); // read the file contents into the buffer
 
-        for (int i = 0; i < file_size; i++) {
-            std::cout << data[i];
-        }
-        std::cout << '\n';
-
         // file not needed now that we have a buffer copy if its contents: close the file
         inBooksFile.close();
 
@@ -76,7 +111,7 @@ void InventoryFile::Read() {
         while (b < file_size) {
 
             // copy the title, and author
-            std::string title = charPtrLen2Str(data, &b, MAX_BOOK_TEXT);
+            std::string title = charPtrLen2StrCompressed(data, &b);
             
 
             std::cout << "--------------- READING A BOOK ---------------\n";
@@ -86,14 +121,17 @@ void InventoryFile::Read() {
             std::cout << "title=" << title << '\n';
             std::cout << "--------\n";
 
-            std::string author = charPtrLen2Str(data, &b, MAX_BOOK_TEXT);
+            std::string author = charPtrLen2StrCompressed(data, &b);
+
+            // read the byte indicating the amount of genres
+            int genresCount = (int) data[b++]; // reads one byte, casts to int
 
             // copy the genres
             // create the final genres vector
             std::vector<std::string> genres;
             std::string curr_genre; // create a buffer for the current genre
-            for (int i = 0; i < MAX_BOOK_GENRES; i++) {
-                curr_genre = charPtrLen2Str(data, &b, MAX_BOOK_TEXT);
+            for (int i = 0; i < genresCount; i++) {
+                curr_genre = charPtrLen2StrCompressed(data, &b);
                 genres.push_back(curr_genre); // add the genre to the vector
             }
 
@@ -119,28 +157,23 @@ void InventoryFile::Write() {
             //outBooksFile << book.GetTitle();
             //outBooksFile << book.GetAuthor();
             //outBooksFile.write(book.GetTitle().c_str(), MAX_BOOK_TEXT);
-            writeStr(&outBooksFile, book.GetTitle(), MAX_BOOK_TEXT);
-            writeStr(&outBooksFile, book.GetAuthor(), MAX_BOOK_TEXT);
+            writeStrCompressed(&outBooksFile, book.GetTitle());
+            writeStrCompressed(&outBooksFile, book.GetAuthor());
             //outBooksFile.write((char*) book.GetAuthor().c_str(), MAX_BOOK_TEXT * sizeof(char));
+
+            // write the amount of genres first
+            outBooksFile << (char) book.GetGenres().size(); // write the length but only as one byte to save space, size shouldn't exceed one byte anyway
 
             // write each genre
             int genres_written = 0; // keep track of how many books we have written
             for (std::string genre : book.GetGenres()) {
                 // write the genre text
-                 writeStr(&outBooksFile, genre, MAX_BOOK_TEXT);
+                 writeStrCompressed(&outBooksFile, genre);
 
                 genres_written++;
             }
-
-            // we need to ensure we have written exactly MAX_BOOK_GENRES genre strings, or the binary file will be unreadable
-            // write an empty string for every genre unwritten below MAX_BOOK_GENRES
-            std::string empty(MAX_BOOK_TEXT, '\0');
-            for (int i = genres_written; i < MAX_BOOK_GENRES; i++) {
-                outBooksFile << empty;
-            }
         }
 
-       
         // close the file
         // check that the file is still "good"
         outBooksFile.close();
