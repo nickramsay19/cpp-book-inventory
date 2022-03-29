@@ -1,0 +1,7 @@
+dist/
+build/
+**/*.o
+**/*.bin
+
+.vscode
+.DS_Store
