@@ -71,7 +71,7 @@ Book::Book(std::string bookTitle, std::string bookAuthor, std::initializer_list<
 void Book::Print() {
     printf("(\"%s\", \"%s\", [", title.c_str(), author.c_str());
     printGenres();
-    std::cout << "]\n";
+    std::cout << "])\n";
 }
 
 void Book::printGenres() {
