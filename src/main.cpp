@@ -21,13 +21,17 @@ int main(int argc, char** argv) {
     InventoryFile invFile(filename);
 
     // TEST
-    bool readOrWriteTest = true;
+    bool readOrWriteTest = false;
     if (readOrWriteTest) {
         invFile.Read();
         invFile.PrintInventory();
     } else {
-        Book book1("Animal Farm", "George Orwell", {"Satire", "Fiction", "Politics"});
+        Book book1("Animal Farm", "George Orwell", {"Fiction", "Satire", "Politics"});
+        Book book2("Dracula", "Bram Stoker", {"Fiction", "Gothic", "Horror", "Fantasy", "Thriller"});
+        Book book3("The Wealth of Nations", "Adam Smith", {"Non-Fiction", "Economics", "Philosophy", "Treatise", "Resource-allocation Theory"});
         invFile.AddBook(book1);
+        invFile.AddBook(book2);
+        invFile.AddBook(book3);
         invFile.Write();
     }
     
