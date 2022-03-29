@@ -46,6 +46,19 @@ void writeStr(std::fstream *outfile, std::string str, size_t len) {
     }
 }
 
+void writeStrCompressed(std::fstream *outfile, std::string str) {
+    // check that str length is less than "len"
+    if (str.length() > MAX_BOOK_TEXT) {
+        char *err_msg;
+        sprintf(err_msg, "Error in \'writeStr\': Parameter \'str\' of value \"%s\" exceeds the length restriction of %d.", str.c_str(), MAX_BOOK_TEXT);
+        throw std::invalid_argument(err_msg);
+    }
+
+    // write the string provided to the output file
+    *outfile << (char) str.length(); // write the length but only as one byte to save space, size shouldn't exceed one byte anyway
+    *outfile << str; // write the string contents
+}
+
 InventoryFile::InventoryFile(std::string inventoryFilename) {
     filename = inventoryFilename;
 }
@@ -119,24 +132,20 @@ void InventoryFile::Write() {
             //outBooksFile << book.GetTitle();
             //outBooksFile << book.GetAuthor();
             //outBooksFile.write(book.GetTitle().c_str(), MAX_BOOK_TEXT);
-            writeStr(&outBooksFile, book.GetTitle(), MAX_BOOK_TEXT);
-            writeStr(&outBooksFile, book.GetAuthor(), MAX_BOOK_TEXT);
+            writeStrCompressed(&outBooksFile, book.GetTitle());
+            writeStrCompressed(&outBooksFile, book.GetAuthor());
             //outBooksFile.write((char*) book.GetAuthor().c_str(), MAX_BOOK_TEXT * sizeof(char));
+
+            // write the amount of genres first
+            outBooksFile << (char) book.GetGenres().size(); // write the length but only as one byte to save space, size shouldn't exceed one byte anyway
 
             // write each genre
             int genres_written = 0; // keep track of how many books we have written
             for (std::string genre : book.GetGenres()) {
                 // write the genre text
-                 writeStr(&outBooksFile, genre, MAX_BOOK_TEXT);
+                 writeStrCompressed(&outBooksFile, genre);
 
                 genres_written++;
-            }
-
-            // we need to ensure we have written exactly MAX_BOOK_GENRES genre strings, or the binary file will be unreadable
-            // write an empty string for every genre unwritten below MAX_BOOK_GENRES
-            std::string empty(MAX_BOOK_TEXT, '\0');
-            for (int i = genres_written; i < MAX_BOOK_GENRES; i++) {
-                outBooksFile << empty;
             }
         }
 
