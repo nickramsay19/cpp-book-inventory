@@ -76,7 +76,7 @@ void Book::Print() {
 
 void Book::printGenres() {
     for (std::string g : genres) {
-        std::cout << "\" << g << "\",";
+        std::cout << "\"" << g << "\",";
     }
 }
 
